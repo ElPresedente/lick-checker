@@ -12,7 +12,14 @@ find_library(URIPARSER_LIB
         HINTS /usr/locale/lib64
 )
 
-add_executable(check_links_rewrite main.cpp link_checker.cpp link_checker.h)
+include(FetchContent)
+FetchContent_Declare(
+        argparse
+        GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
+
+add_executable(check_links_rewrite main.cpp Application.cpp Application.h Page.h)
 
 target_link_libraries(check_links_rewrite
         cpr::cpr
