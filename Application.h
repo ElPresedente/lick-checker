@@ -8,6 +8,7 @@
 #include <string>
 #include <iostream>
 #include <queue>
+#include <chrono>
 
 #include <cpr/cpr.h>
 #include <boost/locale.hpp>
@@ -43,7 +44,7 @@ private:
     void get_child_links(Page& page);
     std::vector<std::string> get_links(std::string page_content);
     std::string fix_encoding(const std::string& input);
-    std::string normalize_url(const std::string& link, const std::string& base_url);
+    static std::string normalize_url(const std::string& link, const std::string& base_url);
 
     static bool is_same_domain(const std::string& url1, const std::string& url2);
     static bool is_pdf_file(const std::string& url);

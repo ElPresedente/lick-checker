@@ -55,9 +55,6 @@ int main(int argc, char** argv) {
         std::exit(1);
     }
 
-    std::cout << program.get<std::string>("--encoding") << std::endl
-        << program.get<std::string>("--query") << std::endl;
-
     std::ostream* error_stream, *log_stream;
 
     if(auto err_file = program.present("--error-file")){
@@ -83,6 +80,14 @@ int main(int argc, char** argv) {
         log_stream
     };
 
+    bool result = app.run();
 
-    return app.run();
+    if(auto err_file = program.present("--error-file")){
+        delete error_stream;
+    }
+    if(auto log_file = program.present("--log-file")){
+        delete log_stream;
+    }
+
+    return result;
 }

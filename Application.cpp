@@ -19,43 +19,59 @@ int Application::run() {
         if(current_page.depth >= depth)
             continue;
         get_child_links(current_page);
-        (*log_stream) << "checking child links"
+        (*log_stream) << "URL: " << current_page.url << " links:" << std::endl;
+        auto begin = std::chrono::steady_clock::now();
         if(async_mode){
             std::vector<cpr::AsyncResponse> head_responses;
 
             for(auto&& link : current_page.child_urls){
                 head_responses.emplace_back(async_head_request(link));
             }
-            for(auto&& resp_promise : head_responses){
+            for(unsigned int i = 0; auto&& resp_promise : head_responses){
                 resp_promise.wait();
                 auto response = resp_promise.get();
+                (*log_stream) << '['<<i++<<'/'<<current_page.child_urls.size()<<']';
                 print_request_log((*log_stream), (*error_stream), request_type::Head, response);
                 if(response.status_code == 200 ){
                     const std::string& current_url = response.url.str();
-                    if(is_same_domain(current_page.url, current_url)
-                       && !is_pdf_file(current_url))
-                    {
-                        process_queue.emplace(response.url.str(), current_page.depth + 1);
+                    try{
+                        if(is_same_domain(current_page.url, current_url)
+                           && !is_pdf_file(current_url))
+                        {
+                            process_queue.emplace(response.url.str(), current_page.depth + 1);
+                        }
+                    }
+                    catch(std::runtime_error& err){
+                        (*error_stream) << "ERROR at page " << current_page.url << "; url "
+                            << response.url.str() << " - " << err.what() << std::endl;
                     }
                 }
             }
         }
         else{
-            for(auto&& link : current_page.child_urls){
+            for(unsigned int i = 0; auto&& link : current_page.child_urls){
                 auto response = sync_head_request(link);
+                (*log_stream) << '['<<i++<<'/'<<current_page.child_urls.size()<<']';
                 print_request_log((*log_stream), (*error_stream), request_type::Head, response);
                 if(response.status_code == 200 ){
                     const std::string& current_url = response.url.str();
-                    if(is_same_domain(current_page.url, current_url)
-                       && !is_pdf_file(current_url))
-                    {
-                        process_queue.emplace(response.url.str(), current_page.depth + 1);
+                    try{
+                        if(is_same_domain(current_page.url, current_url)
+                           && !is_pdf_file(current_url))
+                        {
+                            process_queue.emplace(response.url.str(), current_page.depth + 1);
+                        }
+                    }
+                    catch(std::runtime_error& err){
+                        (*error_stream) << "ERROR at page " << current_page.url << "; url "
+                            << response.url.str() << " - " << err.what() << std::endl;
                     }
                 }
             }
         }
+        auto end = std::chrono::steady_clock::now();
+        (*log_stream) << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
     }
-
     return 0;
 }
 
@@ -70,7 +86,13 @@ void Application::get_child_links(Page &page) {
     // чиним полученные ссылки
 
     for(auto&& link : raw_links){
-        page.child_urls.insert(normalize_url(link, page.url));
+        try{
+            page.child_urls.insert(normalize_url(link, page.url));
+        }
+        catch(std::runtime_error& err){
+            (*error_stream) << "ERROR at page " << page.url << "; url "
+                << link << " - " << err.what() << std::endl;
+        }
     }
     (*log_stream) << "Found " << page.child_urls.size() << " unique links" << std::endl;
 }
@@ -97,9 +119,16 @@ std::string Application::normalize_url(const std::string& link, const std::strin
     UriUriA url, base, resolved_url;
     const char* error;
 
-    if(uriParseSingleUriA(&url, link.c_str(), &error) != URI_SUCCESS)
+    //для корректной обработки пробельных символов
+    std::unique_ptr<char[]> link_escaped = std::make_unique<char[]>(link.length() * 3);
+    uriEscapeA(link.c_str(), link_escaped.get(), true, false);
+
+    std::unique_ptr<char[]> base_url_escaped = std::make_unique<char[]>(base_url.length() * 3);
+    uriEscapeA(base_url.c_str(), base_url_escaped.get(), true, false);
+
+    if(uriParseSingleUriA(&url, link_escaped.get(), &error) != URI_SUCCESS)
         throw std::runtime_error("normalize_url: error while parsing link");
-    if(uriParseSingleUriA(&base, base_url.c_str(), &error)) {
+    if(uriParseSingleUriA(&base, base_url_escaped.get(), &error)) {
         uriFreeUriMembersA(&url);
         throw std::runtime_error("normalize_url: error while parsing base link");
     }
@@ -150,6 +179,8 @@ std::string Application::normalize_url(const std::string& link, const std::strin
         throw std::runtime_error("normalize_url: error while building url string");
     }
 
+    //возвращяем пробелы назад
+    uriUnescapeInPlaceA(result_str.get());
 
     //возвращаем указатели на фрагмент для нормальной очистки памяти
     *nonconst_first = const_cast<char*>(first_fragment_ptr);
@@ -253,4 +284,3 @@ bool Application::is_pdf_file(const std::string& url) {
     uriFreeUriMembersA(&uri);
     return result;
 }
-
