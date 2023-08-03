@@ -28,32 +28,35 @@ private:
 public:
     explicit Application(std::string encoding, std::string start_url,
                          std::string css_query, std::string user_agent,
-                         const unsigned int depth,
+                         const unsigned int depth, bool async_mode,
                          std::ostream* error_stream, std::ostream* log_stream)
     : encoding(std::move(encoding)), start_url(std::move(start_url)),
     css_query(std::move(css_query)), user_agent(std::move(user_agent)),
     error_stream(error_stream), log_stream(log_stream),
-    depth(depth)
+    depth(depth), async_mode(async_mode)
     {} ;
     ~Application() = default;
 
-    bool run();
+    int run();
 
 private:
     void get_child_links(Page& page);
     std::vector<std::string> get_links(std::string page_content);
     std::string fix_encoding(const std::string& input);
     std::string normalize_url(const std::string& link, const std::string& base_url);
-    bool check_page_avialable(std::string url);
+
+    static bool is_same_domain(const std::string& url1, const std::string& url2);
+    static bool is_pdf_file(const std::string& url);
 
     decltype(cpr::HeadAsync())  async_head_request(std::string url);
     decltype(cpr::GetAsync())   async_get_request(std::string url);
     decltype(cpr::Get())        sync_get_request(std::string url);
+    decltype(cpr::Head())       sync_head_request(std::string url);
 
     static void print_request_log(std::ostream& log_stream, std::ostream& error_stream, request_type req_type, const cpr::Response& response);
 
 
-
+    const bool async_mode;
     const std::string encoding;
     const std::string start_url;
     const std::string css_query;

@@ -52,14 +52,14 @@ build cmake_object_order_depends_target_check_links_rewrite: phony || CMakeFiles
 build CMakeFiles/check_links_rewrite.dir/main.cpp.o: CXX_COMPILER__check_links_rewrite_Debug /home/rolark/work/check_links_rewrite/main.cpp || cmake_object_order_depends_target_check_links_rewrite
   DEFINES = -DBOOST_CHRONO_DYN_LINK -DBOOST_CHRONO_NO_LIB -DBOOST_LOCALE_DYN_LINK -DBOOST_LOCALE_NO_LIB -DBOOST_SYSTEM_DYN_LINK -DBOOST_SYSTEM_NO_LIB -DBOOST_THREAD_DYN_LINK -DBOOST_THREAD_NO_LIB
   DEP_FILE = CMakeFiles/check_links_rewrite.dir/main.cpp.o.d
-  FLAGS = -g -fdiagnostics-color=always
+  FLAGS = -g -fdiagnostics-color=always -std=gnu++20
   OBJECT_DIR = CMakeFiles/check_links_rewrite.dir
   OBJECT_FILE_DIR = CMakeFiles/check_links_rewrite.dir
 
 build CMakeFiles/check_links_rewrite.dir/Application.cpp.o: CXX_COMPILER__check_links_rewrite_Debug /home/rolark/work/check_links_rewrite/Application.cpp || cmake_object_order_depends_target_check_links_rewrite
   DEFINES = -DBOOST_CHRONO_DYN_LINK -DBOOST_CHRONO_NO_LIB -DBOOST_LOCALE_DYN_LINK -DBOOST_LOCALE_NO_LIB -DBOOST_SYSTEM_DYN_LINK -DBOOST_SYSTEM_NO_LIB -DBOOST_THREAD_DYN_LINK -DBOOST_THREAD_NO_LIB
   DEP_FILE = CMakeFiles/check_links_rewrite.dir/Application.cpp.o.d
-  FLAGS = -g -fdiagnostics-color=always
+  FLAGS = -g -fdiagnostics-color=always -std=gnu++20
   OBJECT_DIR = CMakeFiles/check_links_rewrite.dir
   OBJECT_FILE_DIR = CMakeFiles/check_links_rewrite.dir
 

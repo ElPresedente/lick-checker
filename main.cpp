@@ -12,6 +12,11 @@ int main(int argc, char** argv) {
         .help("проверяемая ссылка")
         .nargs(1);
 
+    program.add_argument("--async")
+        .help("асинхронная отправка запросов (ddos защита сайта может заблокировать)")
+        .default_value(false)
+        .implicit_value(true);
+
     program.add_argument("--encoding")
         .default_value(std::string{"utf-8"})
         .help("кодировка сканируемых страниц")
@@ -73,18 +78,11 @@ int main(int argc, char** argv) {
         program.get<std::string>("--query"),
         program.get<std::string>("--user-agent"),
         program.get<unsigned int>("--depth"),
+        program.get<bool>("--async"),
         error_stream,
         log_stream
     };
 
 
     return app.run();
-//    std::ofstream error{"report.txt"};
-//    link_checker_cleanup cleanup{2, "https://oreluniver.ru", "windows-1251", ".page-content a", true};
-//    cleanup.set_error_stream(&error);
-//    cleanup.set_user_agent("Mozilla/5.0");
-//
-//    link_checker checker{"https://oreluniver.ru/sveden"};
-//    checker.parse();
-//    return 0;
 }
