@@ -9,10 +9,12 @@
 #include <iostream>
 #include <queue>
 #include <chrono>
+#include <unordered_set>
 
 #include <cpr/cpr.h>
 #include <boost/locale.hpp>
-#include <uriparser/Uri.h>
+#include <boost/url.hpp>
+
 
 //gumbo-parser
 #include "Document.h"

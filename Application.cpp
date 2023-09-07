@@ -4,6 +4,7 @@
 
 #include "Application.h"
 
+
 int Application::run() {
 
     (*log_stream) << "Start in " << (async_mode ? "async" : "sync") << " mode" << std::endl;
@@ -41,7 +42,7 @@ int Application::run() {
                             process_queue.emplace(response.url.str(), current_page.depth + 1);
                         }
                     }
-                    catch(std::runtime_error& err){
+                    catch(std::exception& err){
                         (*error_stream) << "ERROR at page " << current_page.url << "; url "
                             << response.url.str() << " - " << err.what() << std::endl;
                     }
@@ -62,7 +63,7 @@ int Application::run() {
                             process_queue.emplace(response.url.str(), current_page.depth + 1);
                         }
                     }
-                    catch(std::runtime_error& err){
+                    catch(std::exception& err){
                         (*error_stream) << "ERROR at page " << current_page.url << "; url "
                             << response.url.str() << " - " << err.what() << std::endl;
                     }
@@ -115,80 +116,33 @@ std::vector<std::string> Application::get_links(std::string page_content) {
     return links;
 }
 
-std::string Application::normalize_url(const std::string& link, const std::string& base_url) {
-    UriUriA url, base, resolved_url;
-    const char* error;
+std::string Application::normalize_url(const std::string& url, const std::string& base_url) {
+    std::function<bool(char)> charset = [](char ch){
+        const std::string chars {
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "abcdefghijklmnopqrstuvwxyz"
+            "0123456789"
+            "-_.~"
+            ":@/?&=#+[]!$()*,;"
+        };
+        return chars.contains(ch);
+    };
+    boost::urls::encoding_opts opts;
+    opts.space_as_plus = true;
+    auto fixed_string = boost::urls::encode(url, charset);
+    boost::urls::url parsed_link {fixed_string};
+    auto fixed_base_link = boost::urls::encode(base_url, charset);
+    boost::urls::url parsed_base_link {fixed_base_link};
 
-    //для корректной обработки пробельных символов
-    std::unique_ptr<char[]> link_escaped = std::make_unique<char[]>(link.length() * 3);
-    uriEscapeA(link.c_str(), link_escaped.get(), true, false);
+    parsed_link.normalize();
+    parsed_base_link.normalize();
 
-    std::unique_ptr<char[]> base_url_escaped = std::make_unique<char[]>(base_url.length() * 3);
-    uriEscapeA(base_url.c_str(), base_url_escaped.get(), true, false);
+    parsed_base_link.resolve(parsed_link);
 
-    if(uriParseSingleUriA(&url, link_escaped.get(), &error) != URI_SUCCESS)
-        throw std::runtime_error("normalize_url: error while parsing link");
-    if(uriParseSingleUriA(&base, base_url_escaped.get(), &error)) {
-        uriFreeUriMembersA(&url);
-        throw std::runtime_error("normalize_url: error while parsing base link");
-    }
+    parsed_base_link.remove_fragment();
 
-    //переходим от относительной ссылки к абсолютной
-    if(uriAddBaseUriA(&resolved_url, &url, &base) != URI_SUCCESS) {
-        uriFreeUriMembersA(&url);
-        uriFreeUriMembersA(&base);
-        throw std::runtime_error("normalize_url: error while resolving relative link");
-    }
-    //нормализация ссылки
-    if(uriNormalizeSyntaxA(&resolved_url) != URI_SUCCESS){
-        uriFreeUriMembersA(&url);
-        uriFreeUriMembersA(&base);
-        uriFreeUriMembersA(&resolved_url);
-        throw std::runtime_error("normalize_url: error while normalization");
-    }
-    //удаляем фрагмент
-    //библа не умеет в это, так что будем делать некрасиво
-    const char* first_fragment_ptr = resolved_url.fragment.first;
-    const char* afterLast_fragment_ptr = resolved_url.fragment.afterLast;
-
-    char** nonconst_first = const_cast<char**>(&resolved_url.fragment.first);
-    char** nonconst_afterLast = const_cast<char**>(&resolved_url.fragment.afterLast);
-
-    *nonconst_first = nullptr;
-    *nonconst_afterLast = nullptr;
-
-    int chars_required;
-    if (uriToStringCharsRequiredA(&resolved_url, &chars_required) != URI_SUCCESS){
-        *nonconst_first = const_cast<char*>(first_fragment_ptr);
-        *nonconst_afterLast = const_cast<char*>(afterLast_fragment_ptr);
-        uriFreeUriMembersA(&url);
-        uriFreeUriMembersA(&base);
-        uriFreeUriMembersA(&resolved_url);
-        throw std::runtime_error("normalize_url: error while building url string");
-    }
-    chars_required++;
-
-    std::unique_ptr<char[]> result_str = std::make_unique<char[]>(chars_required);
-    int bytes_written;
-    if (uriToStringA(result_str.get(), &resolved_url, chars_required, &bytes_written) != URI_SUCCESS){
-        *nonconst_first = const_cast<char*>(first_fragment_ptr);
-        *nonconst_afterLast = const_cast<char*>(afterLast_fragment_ptr);
-        uriFreeUriMembersA(&url);
-        uriFreeUriMembersA(&base);
-        uriFreeUriMembersA(&resolved_url);
-        throw std::runtime_error("normalize_url: error while building url string");
-    }
-
-    //возвращяем пробелы назад
-    uriUnescapeInPlaceA(result_str.get());
-
-    //возвращаем указатели на фрагмент для нормальной очистки памяти
-    *nonconst_first = const_cast<char*>(first_fragment_ptr);
-    *nonconst_afterLast = const_cast<char*>(afterLast_fragment_ptr);
-    uriFreeUriMembersA(&url);
-    uriFreeUriMembersA(&base);
-    uriFreeUriMembersA(&resolved_url);
-    return std::string{result_str.get()};
+    auto ret = parsed_base_link.buffer();
+    return ret;
 }
 
 
@@ -225,7 +179,7 @@ void Application::print_request_log(std::ostream &log_stream, std::ostream &erro
             << "status - " << response.status_code << ", elapsed time - " << response.elapsed << std::endl
             << "redirect count - " << response.redirect_count << std::endl;
     if(response.status_code != 200){
-        error_stream << "FAILED";
+        error_stream << "FAILED ";
         switch(req_type){
             case request_type::Head:
                 error_stream << "HEAD ";
@@ -240,47 +194,12 @@ void Application::print_request_log(std::ostream &log_stream, std::ostream &erro
 }
 
 bool Application::is_same_domain(const std::string& url1, const std::string& url2) {
-    UriUriA uri1, uri2;
-    const char* error;
-    if(uriParseSingleUriA(&uri1, url1.c_str(), &error) != URI_SUCCESS){
-        throw std::runtime_error("is_same_domain: url1 parsing error");
-    }
-    if(uriParseSingleUriA(&uri2, url2.c_str(), &error) != URI_SUCCESS){
-        uriFreeUriMembersA(&uri1);
-        throw std::runtime_error("is_same_domain: url2 parsing error");
-    }
-
-    bool result = true;
-    size_t url1_domain_length = uri1.hostText.afterLast - uri1.hostText.first;
-    size_t url2_domain_length = uri2.hostText.afterLast - uri2.hostText.first;
-
-    if(url1_domain_length != url2_domain_length){
-        result = false;
-    }
-    else{
-        result = (memcmp(uri1.hostText.first,
-                        uri2.hostText.first,
-                        std::min(url1_domain_length, url2_domain_length)) == 0);
-    }
-
-    uriFreeUriMembersA(&uri1);
-    uriFreeUriMembersA(&uri2);
-    return result;
+    auto parsed_url1 = boost::urls::parse_uri(url1);
+    auto parsed_url2 = boost::urls::parse_uri(url2);
+    return (parsed_url1->host() == parsed_url2->host());
 }
 
 bool Application::is_pdf_file(const std::string& url) {
-    UriUriA uri;
-    const char* error;
-    if(uriParseSingleUriA(&uri, url.c_str(), &error) != URI_SUCCESS){
-        throw std::runtime_error("is_pdf_file: error while parsing url");
-    }
-    bool result = false;
-    size_t path_tail_length = uri.pathTail->text.afterLast - uri.pathTail->text.first;
-    if(path_tail_length > 4){
-        std::unique_ptr<char[]> test_str = std::make_unique<char[]>(5);
-        std::strncpy(test_str.get(), uri.pathTail->text.afterLast - 4, 4);
-        result = (std::strcmp(test_str.get(), ".pdf") == 0);
-    }
-    uriFreeUriMembersA(&uri);
-    return result;
+    auto parsed_url = boost::urls::parse_uri(url);
+    return parsed_url->path().ends_with(".pdf");
 }

@@ -1,16 +1,11 @@
 cmake_minimum_required(VERSION 3.25)
 project(check_links_rewrite)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 find_package(cpr REQUIRED)
 
-find_package(Boost REQUIRED COMPONENTS locale)
-
-find_library(URIPARSER_LIB
-        NAMES uriparser
-        HINTS /usr/locale/lib64
-)
+find_package(Boost REQUIRED COMPONENTS locale url)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -24,6 +19,6 @@ add_executable(check_links_rewrite main.cpp Application.cpp Application.h Page.h
 target_link_libraries(check_links_rewrite
         cpr::cpr
         Boost::locale
+        Boost::url
         gumbo_query
-        ${URIPARSER_LIB}
 )
