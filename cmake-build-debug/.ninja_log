@@ -1,12 +1,4 @@
 # ninja log v5
-11	7315	1694113974950395688	CMakeFiles/check_links_rewrite.dir/Application.cpp.o	520be76152c56f6a
-10	7408	1694113975047395476	CMakeFiles/check_links_rewrite.dir/main.cpp.o	6fce9b27a171e170
-7408	8006	1694113975644394167	check_links_rewrite	b53118fe9222c1f6
-8	431	1694114010663302793	check_links_rewrite	71fad728706d30f6
-7	7094	1694115952871234611	CMakeFiles/check_links_rewrite.dir/Application.cpp.o	520be76152c56f6a
-6	7432	1694115953213234188	CMakeFiles/check_links_rewrite.dir/main.cpp.o	6fce9b27a171e170
-7432	7823	1694115953606233701	check_links_rewrite	71fad728706d30f6
-10	6613	1694116053207104355	CMakeFiles/check_links_rewrite.dir/main.cpp.o	6fce9b27a171e170
-6613	7016	1694116053614103933	check_links_rewrite	71fad728706d30f6
 5	6405	1694116147672368315	CMakeFiles/check_links_rewrite.dir/Application.cpp.o	520be76152c56f6a
+10	6613	1694116053207104355	CMakeFiles/check_links_rewrite.dir/main.cpp.o	6fce9b27a171e170
 6405	6785	1694116148060370659	check_links_rewrite	71fad728706d30f6

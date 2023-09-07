@@ -15,7 +15,7 @@
 #include <boost/url.hpp>
 
 
-//gumbo-parser
+//gumbo-query
 #include "Document.h"
 #include "Node.h"
 

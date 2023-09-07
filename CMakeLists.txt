@@ -14,7 +14,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
-add_executable(check_links_rewrite main.cpp Application.cpp Application.h Page.h)
+add_executable(check_links_rewrite main.cpp Application.cpp Application.h Page.h
+        Node.h)
 
 target_link_libraries(check_links_rewrite
         cpr::cpr
