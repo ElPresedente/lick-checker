@@ -28,7 +28,7 @@ int Application::run() {
             for(auto&& link : current_page.child_urls){
                 head_responses.emplace_back(async_head_request(link));
             }
-            for(unsigned int i = 0; auto&& resp_promise : head_responses){
+            for(unsigned int i = 1; auto&& resp_promise : head_responses){
                 resp_promise.wait();
                 auto response = resp_promise.get();
                 (*log_stream) << '['<<i++<<'/'<<current_page.child_urls.size()<<']';

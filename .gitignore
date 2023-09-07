@@ -10,3 +10,10 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 cmake-build-debug
+Node.h
+Object.h
+Parser.h
+QueryUtil.h
+Selection.h
+Selector.h
+Document.h
