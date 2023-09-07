@@ -5,7 +5,7 @@
 #include "Application.h"
 
 int main(int argc, char** argv) {
-    argparse::ArgumentParser program{"link-checker", "0.0.1"};
+    argparse::ArgumentParser program{"link-checker", "0.0.2"};
 
     program.add_argument("url")
         .required()
